@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pocket Pals Breeder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fffbe6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #ffcb77;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .container {
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .hamster-card {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+      position: relative;
+    }
+    .hamster-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .add-button {
+      background: #ffa200;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>Pocket Pals Breeder</header>
+  <div class="container" id="hamsterContainer"></div>
+  <div style="text-align:center; margin: 2rem;">
+    <button class="add-button" onclick="addHamster()">Add New Hamster</button>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+
+  <script>
+    const hamsterData = JSON.parse(localStorage.getItem('hamsters')) || [];
+
+    function calculateAge(birthdate) {
+      const today = new Date();
+      const birth = new Date(birthdate);
+      const diffTime = Math.abs(today - birth);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return `${diffDays} days old`;
+    }
+
+    function updateAgeEveryDay() {
+      hamsterData.forEach(h => {
+        h.age = calculateAge(h.birthday);
+      });
+      localStorage.setItem('hamsters', JSON.stringify(hamsterData));
+      renderHamsters();
+    }
+
+    function renderHamsters() {
+      const container = document.getElementById('hamsterContainer');
+      container.innerHTML = '';
+
+      hamsterData.forEach((hamster, index) => {
+        const card = document.createElement('div');
+        card.className = 'hamster-card';
+
+        const img = document.createElement('img');
+        img.src = hamster.photo || 'https://placekitten.com/300/200';
+        img.alt = 'Hamster Photo';
+        img.onclick = () => {
+          const fileInput = document.getElementById('fileInput');
+          fileInput.onchange = () => handleImageUpload(fileInput.files[0], index);
+          fileInput.click();
+        };
+
+        const name = document.createElement('h3');
+        name.innerText = hamster.name;
+        name.style.cursor = 'pointer';
+        name.onclick = () => changeName(index);
+
+        const age = document.createElement('p');
+        age.innerText = `Age: ${calculateAge(hamster.birthday)}`;
+
+        const origin = document.createElement('p');
+        origin.innerText = `Parents: ${hamster.origin || 'Unknown'}`;
+
+        card.appendChild(img);
+        card.appendChild(name);
+        card.appendChild(age);
+        card.appendChild(origin);
+
+        container.appendChild(card);
+      });
+    }
+
+    function handleImageUpload(file, index) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        hamsterData[index].photo = event.target.result;
+        localStorage.setItem('hamsters', JSON.stringify(hamsterData));
+        renderHamsters();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function changeName(index) {
+      const newName = prompt('Enter new name:');
+      if (newName) {
+        hamsterData[index].name = newName;
+        localStorage.setItem('hamsters', JSON.stringify(hamsterData));
+        renderHamsters();
+      }
+    }
+
+    function addHamster() {
+      const name = prompt('Enter hamster name:');
+      const birthday = prompt('Enter birthday (YYYY-MM-DD):');
+      const origin = prompt("Enter parents' origin:");
+      if (name && birthday) {
+        const hamster = {
+          name,
+          birthday,
+          origin: origin || 'Unknown',
+          photo: '',
+        };
+        hamster.age = calculateAge(birthday);
+        hamsterData.push(hamster);
+        localStorage.setItem('hamsters', JSON.stringify(hamsterData));
+        renderHamsters();
+      }
+    }
+
+    updateAgeEveryDay();
+  </script>
+</body>
+</html>
